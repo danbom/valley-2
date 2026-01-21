@@ -139,12 +139,16 @@ export class Renderer {
       player.isMoving
     );
 
+    // 캐릭터 크기 5배 (32 * 5 = 160)
+    const PLAYER_SCALE = 5;
+    const playerSize = TILE_SIZE * PLAYER_SCALE * this.camera.getZoom();
+
     this.ctx.drawImage(
       sprite,
-      Math.round(screenPos.x - TILE_SIZE / 2),
-      Math.round(screenPos.y - TILE_SIZE / 2),
-      TILE_SIZE * this.camera.getZoom(),
-      TILE_SIZE * this.camera.getZoom()
+      Math.round(screenPos.x - playerSize / 2),
+      Math.round(screenPos.y - playerSize + TILE_SIZE / 2),  // 발 위치 기준
+      playerSize,
+      playerSize
     );
   }
 

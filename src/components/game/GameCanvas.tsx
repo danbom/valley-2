@@ -249,7 +249,7 @@ export default function GameCanvas() {
     todayEarnings,
   ]);
 
-  // 게임 초기화
+  // 게임 초기화 (한 번만 실행)
   useEffect(() => {
     if (!canvasRef.current || !isLoaded) return;
 
@@ -282,7 +282,16 @@ export default function GameCanvas() {
       destroyGameLoop();
       destroyInputManager();
     };
-  }, [isLoaded, time.season, player.position.x, player.position.y, update, render]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded]);
+
+  // update/render 함수가 변경되면 게임 루프에 반영
+  useEffect(() => {
+    if (gameLoopRef.current) {
+      gameLoopRef.current.setUpdateFunction(update);
+      gameLoopRef.current.setRenderFunction(render);
+    }
+  }, [update, render]);
 
   // 게임 시작 핸들러
   const handleStartNewGame = () => {

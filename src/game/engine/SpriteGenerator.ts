@@ -15,249 +15,733 @@ function createCanvas(width: number, height: number): HTMLCanvasElement {
 }
 
 // 픽셀 그리기 헬퍼
-function setPixel(ctx: CanvasRenderingContext2D, x: number, y: number, color: string, size: number = 1): void {
+function setPixel(ctx: CanvasRenderingContext2D, x: number, y: number, color: string): void {
   ctx.fillStyle = color;
-  ctx.fillRect(x, y, size, size);
+  ctx.fillRect(x, y, 1, 1);
 }
 
-// 사각형 그리기 헬퍼
-function fillRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string): void {
-  ctx.fillStyle = color;
-  ctx.fillRect(x, y, w, h);
+// 픽셀 데이터로 스프라이트 그리기
+function drawPixelArt(ctx: CanvasRenderingContext2D, pixelData: string[], palette: Record<string, string>, offsetX = 0, offsetY = 0): void {
+  for (let y = 0; y < pixelData.length; y++) {
+    const row = pixelData[y];
+    for (let x = 0; x < row.length; x++) {
+      const char = row[x];
+      if (char !== ' ' && char !== '.') {
+        const color = palette[char];
+        if (color) {
+          setPixel(ctx, x + offsetX, y + offsetY, color);
+        }
+      }
+    }
+  }
 }
+
+// ===== 캐릭터 색상 팔레트 (고품질) =====
+const CHAR_PALETTE: Record<string, string> = {
+  // 머리카락 (적갈색 톤)
+  'H': '#8B3A3A',  // 머리카락 기본
+  'h': '#6B2A2A',  // 머리카락 그림자
+  'L': '#A84848',  // 머리카락 하이라이트
+
+  // 피부
+  'S': '#FFE4C4',  // 피부 기본
+  's': '#E8C8A8',  // 피부 그림자
+  'W': '#FFF0DC',  // 피부 하이라이트
+
+  // 눈
+  'E': '#4A2020',  // 눈동자
+  'e': '#6B3030',  // 눈 밝은 부분
+  'w': '#FFFFFF',  // 눈 흰자/하이라이트
+
+  // 옷 (흰색 상의)
+  'C': '#F5F5F0',  // 옷 기본
+  'c': '#D8D8D0',  // 옷 그림자
+  'V': '#FFFFFF',  // 옷 하이라이트
+
+  // 바지 (청바지)
+  'P': '#4A5568',  // 바지 기본
+  'p': '#2D3748',  // 바지 그림자
+
+  // 신발
+  'B': '#8B4513',  // 신발 기본
+  'b': '#5D3010',  // 신발 그림자
+
+  // 귀 (고양이/여우 귀)
+  'R': '#C45050',  // 귀 외부
+  'r': '#FFB6B6',  // 귀 내부
+
+  // 꼬리
+  'T': '#C45050',  // 꼬리 기본
+  't': '#A03030',  // 꼬리 그림자
+
+  // 그림자
+  'X': 'rgba(0,0,0,0.2)',  // 바닥 그림자
+
+  // 액세서리
+  'A': '#FFD700',  // 액세서리 (금색)
+  'a': '#B8860B',  // 액세서리 그림자
+};
+
+// ===== 플레이어 스프라이트 (정면) =====
+const PLAYER_FRONT_SPRITES = [
+  // 프레임 0 (기본)
+  [
+    '........RLLR........',
+    '.......RrrrR........',
+    '.......HLLLLH.......',
+    '......HhHHHHhH......',
+    '......HHHHHHHH......',
+    '.....HhHHLLHHhH.....',
+    '.....HHHHHHHHHH.....',
+    '.....SSSwwSSSSS.....',
+    '.....SSEeSSEeSS.....',
+    '.....SSSSSsSSSS.....',
+    '.....sSSSSSSSSs.....',
+    '......SSSSSSSS......',
+    '......sCCCCCCs......',
+    '.....cCCCCCCCCc.....',
+    '.....CCCCCCCCCC.....',
+    '.....cCCCCCCCCc.....',
+    '.....CVCCCCCCVC.....',
+    '.....cCCCCCCCCc.....',
+    '......CCCCCCCC......',
+    '......cPPPPPPc......',
+    '.......PPPPPP.......',
+    '.......pPPPPp.......',
+    '.......PPPPPP.......',
+    '.......pPppPp.......',
+    '........PP.PP.......',
+    '........Pp.pP.......',
+    '........BB.BB.......',
+    '........Bb.bB.......',
+    '........XX.XX.......',
+    '........XX.XX.......',
+    '........XX.XX.......',
+    '.................... ',
+  ],
+  // 프레임 1 (왼발 앞)
+  [
+    '........RLLR........',
+    '.......RrrrR........',
+    '.......HLLLLH.......',
+    '......HhHHHHhH......',
+    '......HHHHHHHH......',
+    '.....HhHHLLHHhH.....',
+    '.....HHHHHHHHHH.....',
+    '.....SSSwwSSSSS.....',
+    '.....SSEeSSEeSS.....',
+    '.....SSSSSsSSSS.....',
+    '.....sSSSSSSSSs.....',
+    '......SSSSSSSS......',
+    '......sCCCCCCs......',
+    '.....cCCCCCCCCc.....',
+    '.....CCCCCCCCCC.....',
+    '.....cCCCCCCCCc.....',
+    '.....CVCCCCCCVC.....',
+    '.....cCCCCCCCCc.....',
+    '......CCCCCCCC......',
+    '......cPPPPPPc......',
+    '.......PPPPPP.......',
+    '.......pPPPPp.......',
+    '......PPPP.PP.......',
+    '......pPp..Pp.......',
+    '.......PP..PP.......',
+    '.......Pp..pP.......',
+    '.......BB..BB.......',
+    '.......Bb..bB.......',
+    '.......XX..XX.......',
+    '.....................',
+    '.....................',
+    '.....................',
+  ],
+  // 프레임 2 (기본)
+  [
+    '........RLLR........',
+    '.......RrrrR........',
+    '.......HLLLLH.......',
+    '......HhHHHHhH......',
+    '......HHHHHHHH......',
+    '.....HhHHLLHHhH.....',
+    '.....HHHHHHHHHH.....',
+    '.....SSSwwSSSSS.....',
+    '.....SSEeSSEeSS.....',
+    '.....SSSSSsSSSS.....',
+    '.....sSSSSSSSSs.....',
+    '......SSSSSSSS......',
+    '......sCCCCCCs......',
+    '.....cCCCCCCCCc.....',
+    '.....CCCCCCCCCC.....',
+    '.....cCCCCCCCCc.....',
+    '.....CVCCCCCCVC.....',
+    '.....cCCCCCCCCc.....',
+    '......CCCCCCCC......',
+    '......cPPPPPPc......',
+    '.......PPPPPP.......',
+    '.......pPPPPp.......',
+    '.......PPPPPP.......',
+    '.......pPppPp.......',
+    '........PP.PP.......',
+    '........Pp.pP.......',
+    '........BB.BB.......',
+    '........Bb.bB.......',
+    '........XX.XX.......',
+    '.....................',
+    '.....................',
+    '.....................',
+  ],
+  // 프레임 3 (오른발 앞)
+  [
+    '........RLLR........',
+    '.......RrrrR........',
+    '.......HLLLLH.......',
+    '......HhHHHHhH......',
+    '......HHHHHHHH......',
+    '.....HhHHLLHHhH.....',
+    '.....HHHHHHHHHH.....',
+    '.....SSSwwSSSSS.....',
+    '.....SSEeSSEeSS.....',
+    '.....SSSSSsSSSS.....',
+    '.....sSSSSSSSSs.....',
+    '......SSSSSSSS......',
+    '......sCCCCCCs......',
+    '.....cCCCCCCCCc.....',
+    '.....CCCCCCCCCC.....',
+    '.....cCCCCCCCCc.....',
+    '.....CVCCCCCCVC.....',
+    '.....cCCCCCCCCc.....',
+    '......CCCCCCCC......',
+    '......cPPPPPPc......',
+    '.......PPPPPP.......',
+    '.......pPPPPp.......',
+    '.......PP.PPPP......',
+    '.......pP..pPp......',
+    '.......PP..PP.......',
+    '.......Pp..pP.......',
+    '.......BB..BB.......',
+    '.......Bb..bB.......',
+    '.......XX..XX.......',
+    '.....................',
+    '.....................',
+    '.....................',
+  ],
+];
+
+// ===== 플레이어 스프라이트 (뒷면) =====
+const PLAYER_BACK_SPRITES = [
+  [
+    '........RLLR........',
+    '.......RrrrR........',
+    '.......HLLLLH.......',
+    '......HhHHHHhH......',
+    '......HHHHHHHH......',
+    '.....HhHHHHHHhH.....',
+    '.....HHHHHHHHHH.....',
+    '.....hHHHHHHHHh.....',
+    '.....HHHHHHHHHH.....',
+    '.....hHHHHHHHHh.....',
+    '.....HHHHHHHHHHh....',
+    '......HHHHHHHH......',
+    '......sCCCCCCs......',
+    '.....cCCCCCCCCc.....',
+    '.....CCCCCCCCCC.....',
+    '.....cCCCCCCCCc.....',
+    '.....CVCCCCCCVC.....',
+    '.....cCCCCCCCCc.....',
+    '......CCCCCCCC......',
+    '......cPPPPPPc......',
+    '.......PPPPPP.......',
+    '.......pPPPPp.......',
+    '.......PPPPPP.......',
+    '.......pPppPp.......',
+    '........PP.PP.......',
+    '........Pp.pP.......',
+    '........BB.BB.......',
+    '........Bb.bB.......',
+    '........XX.XX.......',
+    '.....................',
+    '.....................',
+    '.....................',
+  ],
+];
+
+// ===== 플레이어 스프라이트 (좌측) =====
+const PLAYER_LEFT_SPRITES = [
+  [
+    '.........RLR........',
+    '........RrrR........',
+    '........HLLLH.......',
+    '.......HhHHHhH......',
+    '.......HHHHHHH......',
+    '......HhHHLHHh......',
+    '......HHHHHHHH......',
+    '......SSwSSSS.......',
+    '......SEeSSSSS......',
+    '......SSSSSSSS......',
+    '......sSSSSSSs......',
+    '.......SSSSSS.......',
+    '.......sCCCCCs......',
+    '......SSCCCCCCc.....',
+    '......SCCCCCCCC.....',
+    '......sCCCCCCCc.....',
+    '......SCVCCCCVC.....',
+    '......SCCCCCCCc.....',
+    '.......CCCCCCC......',
+    '.......cPPPPPc......',
+    '........PPPPP.......',
+    '........pPPPp.......',
+    '........PPPPP.......',
+    '........pPpPp.......',
+    '.........PPPP.......',
+    '.........PppP.......',
+    '.........BBBB.......',
+    '.........BbbB.......',
+    '.........XXXX.......',
+    '.....................',
+    '.....................',
+    '.....................',
+  ],
+];
+
+// ===== 플레이어 스프라이트 (우측) =====
+const PLAYER_RIGHT_SPRITES = [
+  [
+    '........RLR.........',
+    '........RrrR........',
+    '.......HLLLH........',
+    '......HhHHHhH.......',
+    '......HHHHHHH.......',
+    '......hHHLHHhH......',
+    '......HHHHHHHH......',
+    '.......SSSSwSS......',
+    '.......SSSSSeES.....',
+    '......SSSSSSSS......',
+    '......sSSSSSSs......',
+    '.......SSSSSS.......',
+    '......sCCCCCs.......',
+    '.....cCCCCCCSS......',
+    '.....CCCCCCCCS......',
+    '.....cCCCCCCCs......',
+    '.....CVCCCCVCS......',
+    '.....cCCCCCCCS......',
+    '......CCCCCCC.......',
+    '......cPPPPPc.......',
+    '.......PPPPP........',
+    '.......pPPPp........',
+    '.......PPPPP........',
+    '.......pPpPp........',
+    '.......PPPP.........',
+    '.......PppP.........',
+    '.......BBBB.........',
+    '.......BbbB.........',
+    '.......XXXX.........',
+    '.....................',
+    '.....................',
+    '.....................',
+  ],
+];
 
 // ===== 플레이어 스프라이트 생성 =====
 export function generatePlayerSprite(direction: Direction, frame: number, isMoving: boolean): HTMLCanvasElement {
-  const cacheKey = `player_${direction}_${frame}_${isMoving}`;
+  const frameIndex = isMoving ? Math.floor(frame) % 4 : 0;
+  const cacheKey = `player_${direction}_${frameIndex}_${isMoving}`;
   if (spriteCache[cacheKey]) return spriteCache[cacheKey];
 
   const canvas = createCanvas(TILE_SIZE, TILE_SIZE);
   const ctx = canvas.getContext('2d')!;
 
-  // 그림자
-  fillRect(ctx, 8, 28, 16, 4, PALETTE.shadow);
-
-  // 발 위치 (걷기 애니메이션)
-  const legOffset = isMoving ? Math.sin(frame * Math.PI) * 2 : 0;
-
-  // 신발
-  const leftFootX = direction === 'left' ? 10 - legOffset : 10 + legOffset;
-  const rightFootX = direction === 'right' ? 18 + legOffset : 18 - legOffset;
-  fillRect(ctx, leftFootX, 26, 4, 3, PALETTE.shoes);
-  fillRect(ctx, rightFootX, 26, 4, 3, PALETTE.shoes);
-
-  // 바지 (하늘색)
-  fillRect(ctx, 10, 20, 12, 7, PALETTE.pants);
-  fillRect(ctx, 9, 22, 3, 5, PALETTE.pantsShadow);
-
-  // 상의 (연핑크)
-  fillRect(ctx, 9, 12, 14, 9, PALETTE.shirt);
-  fillRect(ctx, 8, 14, 2, 5, PALETTE.shirtShadow);
-  fillRect(ctx, 22, 14, 2, 5, PALETTE.shirtShadow);
-
-  // 팔
-  if (direction === 'left') {
-    fillRect(ctx, 6, 14, 3, 6, PALETTE.shirt);
-    fillRect(ctx, 22, 14, 3, 6, PALETTE.shirtShadow);
-  } else if (direction === 'right') {
-    fillRect(ctx, 6, 14, 3, 6, PALETTE.shirtShadow);
-    fillRect(ctx, 22, 14, 3, 6, PALETTE.shirt);
-  } else {
-    fillRect(ctx, 6, 14, 3, 6, PALETTE.shirt);
-    fillRect(ctx, 23, 14, 3, 6, PALETTE.shirt);
+  let sprites: string[][];
+  switch (direction) {
+    case 'up':
+      sprites = PLAYER_BACK_SPRITES;
+      break;
+    case 'down':
+      sprites = PLAYER_FRONT_SPRITES;
+      break;
+    case 'left':
+      sprites = PLAYER_LEFT_SPRITES;
+      break;
+    case 'right':
+      sprites = PLAYER_RIGHT_SPRITES;
+      break;
   }
 
-  // 손
-  if (direction !== 'up') {
-    fillRect(ctx, 6, 19, 3, 3, PALETTE.skin);
-    fillRect(ctx, 23, 19, 3, 3, PALETTE.skin);
-  }
+  const spriteData = sprites[frameIndex % sprites.length];
 
-  // 머리 (얼굴)
-  fillRect(ctx, 8, 2, 16, 12, PALETTE.skin);
+  // 스프라이트 데이터를 20x32에서 32x32로 센터링
+  const offsetX = 6;
+  const offsetY = 0;
 
-  // 머리카락 (갈색, 순정만화 스타일)
-  fillRect(ctx, 7, 1, 18, 4, PALETTE.hair);
-  fillRect(ctx, 6, 2, 3, 6, PALETTE.hair);
-  fillRect(ctx, 23, 2, 3, 6, PALETTE.hair);
-
-  // 머리카락 하이라이트
-  fillRect(ctx, 9, 2, 3, 2, PALETTE.hairHighlight);
-
-  // 눈 (방향에 따라)
-  if (direction === 'up') {
-    // 뒷모습 - 눈 안 보임
-  } else if (direction === 'down') {
-    // 정면
-    fillRect(ctx, 11, 6, 3, 3, PALETTE.white);
-    fillRect(ctx, 18, 6, 3, 3, PALETTE.white);
-    fillRect(ctx, 12, 7, 2, 2, PALETTE.black);
-    fillRect(ctx, 19, 7, 2, 2, PALETTE.black);
-    // 눈 반짝임
-    setPixel(ctx, 12, 7, PALETTE.white, 1);
-    setPixel(ctx, 19, 7, PALETTE.white, 1);
-  } else {
-    // 옆모습
-    const eyeX = direction === 'left' ? 10 : 19;
-    fillRect(ctx, eyeX, 6, 3, 3, PALETTE.white);
-    fillRect(ctx, eyeX + 1, 7, 2, 2, PALETTE.black);
-    setPixel(ctx, eyeX + 1, 7, PALETTE.white, 1);
-  }
-
-  // 볼터치 (순정만화 느낌)
-  if (direction !== 'up') {
-    fillRect(ctx, 9, 10, 2, 2, '#FFB6C1');
-    fillRect(ctx, 21, 10, 2, 2, '#FFB6C1');
-  }
-
-  // 입
-  if (direction === 'down') {
-    fillRect(ctx, 14, 11, 4, 1, '#E89BA6');
-  }
+  drawPixelArt(ctx, spriteData, CHAR_PALETTE, offsetX, offsetY);
 
   spriteCache[cacheKey] = canvas;
   return canvas;
 }
+
+// ===== 타일 팔레트 =====
+const TILE_PALETTE: Record<string, string> = {
+  // 잔디
+  'G': '#7CCD7C',  // 잔디 기본
+  'g': '#6BB86B',  // 잔디 그림자
+  'D': '#8FD88F',  // 잔디 하이라이트
+
+  // 흙
+  'E': '#C4A574',  // 흙 기본
+  'e': '#A08050',  // 흙 그림자
+  'F': '#D4B584',  // 흙 하이라이트
+
+  // 돌
+  'S': '#9898A0',  // 돌 기본
+  's': '#787880',  // 돌 그림자
+  'W': '#B8B8C0',  // 돌 하이라이트
+
+  // 꽃
+  'R': '#FF6B6B',  // 빨간 꽃
+  'Y': '#FFD93D',  // 노란 꽃
+  'P': '#C9A0DC',  // 보라 꽃
+  'O': '#FFA07A',  // 주황 꽃
+
+  // 줄기/잎
+  'L': '#228B22',  // 줄기
+  'l': '#1E7A1E',  // 줄기 그림자
+
+  // 물
+  'B': '#6CA6CD',  // 물 기본
+  'b': '#5A8FB5',  // 물 그림자
+  'w': '#87CEEB',  // 물 하이라이트
+};
+
+// ===== 잔디 타일 =====
+const GRASS_TILE = [
+  'GGDGGgGGGDGGgGGGDGGGgGGGDGGGgGGG',
+  'GgGGGGDGGGGGGDGgGGGGGGDGGGGGGDGg',
+  'GGGGgGGGGGgGGGGGGGgGGGGGGgGGGGGG',
+  'GDGGGGGGDGGGGGGGDGGGGGGGDGGGGGGG',
+  'GGGGGDGGGGGGGDGGGGGGGDGGGGGGGDGG',
+  'gGGGGGGgGGGGGGGgGGGGGGGgGGGGGGGg',
+  'GGGDGGGGGGDGGGGGGGDGGGGGGDGGGGGG',
+  'GGGGGGGGGGGGGGDGGGGGGGGGGGGGGDGG',
+  'GgGGGGDGgGGGGGGGgGGGGDGgGGGGGGGg',
+  'GGGGgGGGGGGGgGGGGGGgGGGGGGGgGGGG',
+  'GDGGGGGGDGGGGGGGDGGGGGGGDGGGGGGG',
+  'GGGGGGDGGGGGGGDGGGGGGGDGGGGGGGDG',
+  'gGGGGGGGgGGGGGGGgGGGGGGGgGGGGGGG',
+  'GGGDGGGGGGDGGGGGGGDGGGGGGDGGGGGG',
+  'GGGGGGGGGGGGGGDGGGGGGGGGGGGGGDGG',
+  'GgGGGGDGgGGGGGGGgGGGGDGgGGGGGGGg',
+  'GGGGgGGGGGGGgGGGGGGgGGGGGGGgGGGG',
+  'GDGGGGGGDGGGGGGGDGGGGGGGDGGGGGGG',
+  'GGGGGGDGGGGGGGDGGGGGGGDGGGGGGGDG',
+  'gGGGGGGGgGGGGGGGgGGGGGGGgGGGGGGG',
+  'GGGDGGGGGGDGGGGGGGDGGGGGGDGGGGGG',
+  'GGGGGGGGGGGGGGDGGGGGGGGGGGGGGDGG',
+  'GgGGGGDGgGGGGGGGgGGGGDGgGGGGGGGg',
+  'GGGGgGGGGGGGgGGGGGGgGGGGGGGgGGGG',
+  'GDGGGGGGDGGGGGGGDGGGGGGGDGGGGGGG',
+  'GGGGGGDGGGGGGGDGGGGGGGDGGGGGGGDG',
+  'gGGGGGGGgGGGGGGGgGGGGGGGgGGGGGGG',
+  'GGGDGGGGGGDGGGGGGGDGGGGGGDGGGGGG',
+  'GGGGGGGGGGGGGGDGGGGGGGGGGGGGGDGG',
+  'GgGGGGDGgGGGGGGGgGGGGDGgGGGGGGGg',
+  'GGGGgGGGGGGGgGGGGGGgGGGGGGGgGGGG',
+  'GDGGGGGGDGGGGGGGDGGGGGGGDGGGGGGG',
+];
+
+// ===== 꽃이 있는 잔디 타일 =====
+const GRASS_FLOWER_TILE = [
+  'GGDGGgGGGDGGgGGGDGGGgGGGDGGGgGGG',
+  'GgGGGGDGGGGGGDGgGGGGGGDGGGGGGDGg',
+  'GGGGgGGGGGgGGGGGGGgGGGGGGgGGGGGG',
+  'GDGGGGGGDGGGGGGGDGGGGGGGDGGGGGGG',
+  'GGGGGDGGGGGGGDGGGGGGGDGGGGGGGDGG',
+  'gGGGGGGgGGLGGGGgGGGGGGGgGGGGGGGg',
+  'GGGDGGGGGLRLGGGGGGDGGGGGGDGGGGGG',
+  'GGGGGGGGGGLGGGDGGGGGGGGGGGGGGDGg',
+  'GgGGGGDGgGGGGGGGgGGGGDGgGGGGGGGg',
+  'GGGGgGGGGGGGgGGGGGGgGGGGGGGgGGGG',
+  'GDGGGGGGDGGGGGGGDGGGGGGGDGGGGGGG',
+  'GGGGGGDGGGGGGGDGGGLGGGDGGGGGGGDG',
+  'gGGGGGGGgGGGGGGGgGLYLGGGgGGGGGGG',
+  'GGGDGGGGGGDGGGGGGGLGGGGGGDGGGGGG',
+  'GGGGGGGGGGGGGGDGGGGGGGGGGGGGGDGg',
+  'GgGGGGDGgGGGGGGGgGGGGDGgGGGGGGGg',
+  'GGGGgGGGGGGGgGGGGGGgGGGGGGGgGGGG',
+  'GDGGGGGGDGGGGGGGDGGGGGGGDGGGGGGG',
+  'GGGGGGDGGGGGGGDGGGGGGGDGGGGGGGDG',
+  'gGGGGGGGgGGGGGGGgGGGGGGGgGGLGGGG',
+  'GGGDGGGGGGDGGGGGGGDGGGGGGDLPLGGG',
+  'GGGGGGGGGGGGGGDGGGGGGGGGGGGLGDGg',
+  'GgGGGGDGgGGGGGGGgGGGGDGgGGGGGGGg',
+  'GGGGgGGGGGGGgGGGGGGgGGGGGGGgGGGG',
+  'GDGGGGGGDGGGGGGGDGGGGGGGDGGGGGGG',
+  'GGGGGGDGGGGGGGDGGGGGGGDGGGGGGGDG',
+  'gGGGGGGGgGGGGGGGgGGGGGGGgGGGGGGG',
+  'GGGDGGGGGGDGGGGGGGDGGGGGGDGGGGGG',
+  'GGGGGGGGGGGGGGDGGGGGGGGGGGGGGDGg',
+  'GgGGGGDGgGGGGGGGgGGGGDGgGGGGGGGg',
+  'GGGGgGGGGGGGgGGGGGGgGGGGGGGgGGGG',
+  'GDGGGGGGDGGGGGGGDGGGGGGGDGGGGGGG',
+];
+
+// ===== 흙 타일 =====
+const DIRT_TILE = [
+  'EEFEEeEEEFEEeEEEFEEEeEEEFEEEeEEE',
+  'EeEEEEFEEEEEEFEeEEEEEEFEEEEEEFEe',
+  'EEEEeEEEEEeEEEEEEEeEEEEEEeEEEEEE',
+  'EFEEEEEEFEEEEEEEFEEEEEEEFEEEEEEE',
+  'EEEEEFEEEEEEEFEEEEEEEFEEEEEEEFEe',
+  'eEEEEEEeEEEEEEEeEEEEEEEeEEEEEEEe',
+  'EEEFEEEEEEFEEEEEEEFEEEEEEFEEEEEe',
+  'EEEEEEEEEEEEEEFEEEEEEEEEEEEEEFEe',
+  'EeEEEEFEeEEEEEEEeEEEEFEeEEEEEEEe',
+  'EEEEeEEEEEEEeEEEEEEeEEEEEEEeEEEE',
+  'EFEEEEEEFEEEEEEEFEEEEEEEFEEEEEEe',
+  'EEEEEEFEEEEEEEFEEEEEEEFEEEEEEEFe',
+  'eEEEEEEEeEEEEEEEeEEEEEEEeEEEEEEe',
+  'EEEFEEEEEEFEEEEEEEFEEEEEEFEEEEEe',
+  'EEEEEEEEEEEEEEFEEEEEEEEEEEEEEFEe',
+  'EeEEEEFEeEEEEEEEeEEEEFEeEEEEEEEe',
+  'EEEEeEEEEEEEeEEEEEEeEEEEEEEeEEEE',
+  'EFEEEEEEFEEEEEEEFEEEEEEEFEEEEEEe',
+  'EEEEEEFEEEEEEEFEEEEEEEFEEEEEEEFe',
+  'eEEEEEEEeEEEEEEEeEEEEEEEeEEEEEEe',
+  'EEEFEEEEEEFEEEEEEEFEEEEEEFEEEEEe',
+  'EEEEEEEEEEEEEEFEEEEEEEEEEEEEEFEe',
+  'EeEEEEFEeEEEEEEEeEEEEFEeEEEEEEEe',
+  'EEEEeEEEEEEEeEEEEEEeEEEEEEEeEEEE',
+  'EFEEEEEEFEEEEEEEFEEEEEEEFEEEEEEe',
+  'EEEEEEFEEEEEEEFEEEEEEEFEEEEEEEFe',
+  'eEEEEEEEeEEEEEEEeEEEEEEEeEEEEEEe',
+  'EEEFEEEEEEFEEEEEEEFEEEEEEFEEEEEe',
+  'EEEEEEEEEEEEEEFEEEEEEEEEEEEEEFEe',
+  'EeEEEEFEeEEEEEEEeEEEEFEeEEEEEEEe',
+  'EEEEeEEEEEEEeEEEEEEeEEEEEEEeEEEE',
+  'EFEEEEEEFEEEEEEEFEEEEEEEFEEEEEEe',
+];
 
 // ===== 타일 스프라이트 생성 =====
-export function generateTileSprite(type: TileType, season: Season, variant: number = 0): HTMLCanvasElement {
-  const cacheKey = `tile_${type}_${season}_${variant}`;
+export function generateTileSprite(tileType: TileType, season: Season, variant: number = 0): HTMLCanvasElement {
+  const cacheKey = `tile_${tileType}_${season}_${variant}`;
   if (spriteCache[cacheKey]) return spriteCache[cacheKey];
 
   const canvas = createCanvas(TILE_SIZE, TILE_SIZE);
   const ctx = canvas.getContext('2d')!;
 
-  switch (type) {
+  // 계절별 색상 조정
+  const seasonalPalette = { ...TILE_PALETTE };
+  const grassColor = getSeasonalGrassColor(season);
+  seasonalPalette['G'] = grassColor;
+  seasonalPalette['g'] = adjustColor(grassColor, -20);
+  seasonalPalette['D'] = adjustColor(grassColor, 20);
+
+  switch (tileType) {
     case 'grass':
-      drawGrassTile(ctx, season, variant);
+      if (variant % 3 === 0) {
+        drawPixelArt(ctx, GRASS_FLOWER_TILE, seasonalPalette, 0, 0);
+      } else {
+        drawPixelArt(ctx, GRASS_TILE, seasonalPalette, 0, 0);
+      }
       break;
     case 'dirt':
-      drawDirtTile(ctx, variant);
-      break;
     case 'tilled':
-      drawTilledTile(ctx, false);
+      drawPixelArt(ctx, DIRT_TILE, seasonalPalette, 0, 0);
+      if (tileType === 'tilled') {
+        // 경작된 흙 무늬 추가
+        for (let i = 0; i < 4; i++) {
+          ctx.fillStyle = '#8B6914';
+          ctx.fillRect(4 + i * 7, 8, 5, 2);
+          ctx.fillRect(4 + i * 7, 16, 5, 2);
+          ctx.fillRect(4 + i * 7, 24, 5, 2);
+        }
+      }
       break;
     case 'watered':
-      drawTilledTile(ctx, true);
+      drawPixelArt(ctx, DIRT_TILE, seasonalPalette, 0, 0);
+      // 물을 준 흙 (더 어둡게)
+      ctx.fillStyle = 'rgba(70, 50, 30, 0.4)';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      for (let i = 0; i < 4; i++) {
+        ctx.fillStyle = '#5A4010';
+        ctx.fillRect(4 + i * 7, 8, 5, 2);
+        ctx.fillRect(4 + i * 7, 16, 5, 2);
+        ctx.fillRect(4 + i * 7, 24, 5, 2);
+      }
       break;
     case 'water':
-      drawWaterTile(ctx, variant);
-      break;
-    case 'wood_floor':
-      drawWoodFloorTile(ctx);
-      break;
-    case 'fence':
-      drawFenceTile(ctx);
+      ctx.fillStyle = TILE_PALETTE['B'];
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      // 물결 무늬
+      ctx.fillStyle = TILE_PALETTE['w'];
+      for (let i = 0; i < 4; i++) {
+        ctx.fillRect(2 + i * 8, 6 + (variant % 2) * 4, 4, 2);
+        ctx.fillRect(6 + i * 8, 18 + (variant % 2) * 4, 4, 2);
+      }
+      ctx.fillStyle = TILE_PALETTE['b'];
+      for (let i = 0; i < 3; i++) {
+        ctx.fillRect(4 + i * 10, 12, 3, 2);
+        ctx.fillRect(8 + i * 10, 26, 3, 2);
+      }
       break;
     default:
-      fillRect(ctx, 0, 0, TILE_SIZE, TILE_SIZE, '#FF00FF');
+      // 기본 잔디
+      drawPixelArt(ctx, GRASS_TILE, seasonalPalette, 0, 0);
   }
 
   spriteCache[cacheKey] = canvas;
   return canvas;
 }
 
-function drawGrassTile(ctx: CanvasRenderingContext2D, season: Season, variant: number): void {
-  const baseColor = getSeasonalGrassColor(season, 'main');
-  const darkColor = getSeasonalGrassColor(season, 'dark');
-  const lightColor = getSeasonalGrassColor(season, 'light');
-
-  // 베이스 색상
-  fillRect(ctx, 0, 0, TILE_SIZE, TILE_SIZE, baseColor);
-
-  // 텍스처 (약간의 변화)
-  for (let i = 0; i < 8; i++) {
-    const x = ((variant * 7 + i * 13) % 28) + 2;
-    const y = ((variant * 11 + i * 17) % 28) + 2;
-    setPixel(ctx, x, y, i % 2 === 0 ? darkColor : lightColor, 2);
-  }
-
-  // 작은 풀잎 (겨울 제외)
-  if (season !== 'winter') {
-    for (let i = 0; i < 3; i++) {
-      const x = ((variant * 5 + i * 11) % 24) + 4;
-      const y = ((variant * 7 + i * 13) % 20) + 8;
-      setPixel(ctx, x, y, darkColor, 1);
-      setPixel(ctx, x, y - 1, darkColor, 1);
-      setPixel(ctx, x, y - 2, darkColor, 1);
-    }
-  }
+// 색상 밝기 조정 헬퍼
+function adjustColor(hex: string, amount: number): string {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, Math.max(0, ((num >> 16) & 0xff) + amount));
+  const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
+  const b = Math.min(255, Math.max(0, (num & 0xff) + amount));
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
 }
 
-function drawDirtTile(ctx: CanvasRenderingContext2D, variant: number): void {
-  fillRect(ctx, 0, 0, TILE_SIZE, TILE_SIZE, PALETTE.dirt);
+// ===== 돌/바위 스프라이트 =====
+const ROCK_SMALL = [
+  '......SSSSS.....',
+  '.....SWWWSSs....',
+  '....SWWSSSSs....',
+  '....SSSSSSSs....',
+  '....sSSSSSss....',
+  '.....sssss......',
+];
 
-  // 텍스처
-  for (let i = 0; i < 6; i++) {
-    const x = ((variant * 7 + i * 11) % 28) + 2;
-    const y = ((variant * 13 + i * 17) % 28) + 2;
-    setPixel(ctx, x, y, i % 2 === 0 ? PALETTE.dirtDark : PALETTE.dirtLight, 2);
+const ROCK_LARGE = [
+  '......SSSSSS........',
+  '.....SWWWWSSs.......',
+  '....SWWSSSSS s......',
+  '....SSSSSSSSSs......',
+  '....SSSSSSSSSs......',
+  '....sSSSSSSSss......',
+  '.....ssssssss.......',
+];
+
+// ===== 나무 스프라이트 =====
+const TREE_PALETTE: Record<string, string> = {
+  'T': '#228B22',  // 잎 기본
+  't': '#1B6B1B',  // 잎 그림자
+  'L': '#32CD32',  // 잎 하이라이트
+  'B': '#8B4513',  // 나무껍질
+  'b': '#5D3510',  // 나무껍질 그림자
+  'W': '#A0522D',  // 나무껍질 하이라이트
+};
+
+const TREE_SPRITE = [
+  '.........TTTTT..........',
+  '........TTLLTTT.........',
+  '.......TTTTTTTTTT.......',
+  '......TTTLLTTTTTT.......',
+  '.....TTTTTTTtTTTTT......',
+  '....TTTTLTTTtTTTTTT.....',
+  '...TTTTTTTTTtTTLTTTT....',
+  '..TTTLTTTTTTtTTTTTTTT...',
+  '..TTTTTTTTTTtTTTTTTTT...',
+  '.TTTTTTTLTTTtTTTTTTTTT..',
+  '.tTTTTTTTTTTtTTTLTTTTt..',
+  '..tTTTTTTTTTtTTTTTTTt...',
+  '...tTTTTTTTTtTTTTTTt....',
+  '....ttTTTTTTtTTTTtt.....',
+  '.......tTTTTTTTt........',
+  '..........BB............',
+  '.........BWBb...........',
+  '.........BBBb...........',
+  '..........Bb............',
+  '..........Bb............',
+];
+
+// ===== 건물/구조물 스프라이트 =====
+export function generateBuildingSprite(buildingType: string): HTMLCanvasElement {
+  const cacheKey = `building_${buildingType}`;
+  if (spriteCache[cacheKey]) return spriteCache[cacheKey];
+
+  // 건물은 여러 타일에 걸쳐 그려지므로 더 큰 캔버스 사용
+  const size = buildingType === 'house' ? 96 : 64;
+  const canvas = createCanvas(size, size);
+  const ctx = canvas.getContext('2d')!;
+
+  switch (buildingType) {
+    case 'house':
+      // 집 지붕
+      ctx.fillStyle = '#8B0000';
+      ctx.beginPath();
+      ctx.moveTo(48, 8);
+      ctx.lineTo(8, 40);
+      ctx.lineTo(88, 40);
+      ctx.closePath();
+      ctx.fill();
+
+      // 지붕 하이라이트
+      ctx.fillStyle = '#A52A2A';
+      ctx.beginPath();
+      ctx.moveTo(48, 8);
+      ctx.lineTo(48, 40);
+      ctx.lineTo(88, 40);
+      ctx.closePath();
+      ctx.fill();
+
+      // 집 본체
+      ctx.fillStyle = '#F5DEB3';
+      ctx.fillRect(16, 40, 64, 48);
+
+      // 문
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(40, 56, 16, 32);
+      ctx.fillStyle = '#A0522D';
+      ctx.fillRect(42, 58, 12, 28);
+
+      // 창문
+      ctx.fillStyle = '#87CEEB';
+      ctx.fillRect(22, 50, 12, 12);
+      ctx.fillRect(62, 50, 12, 12);
+      ctx.fillStyle = '#F5F5F5';
+      ctx.fillRect(27, 50, 2, 12);
+      ctx.fillRect(22, 55, 12, 2);
+      ctx.fillRect(67, 50, 2, 12);
+      ctx.fillRect(62, 55, 12, 2);
+      break;
+
+    case 'shipping_bin':
+      // 출하함
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(8, 16, 48, 40);
+      ctx.fillStyle = '#A0522D';
+      ctx.fillRect(10, 18, 44, 4);
+      ctx.fillStyle = '#5D3510';
+      ctx.fillRect(8, 52, 48, 4);
+      // 뚜껑
+      ctx.fillStyle = '#654321';
+      ctx.fillRect(4, 8, 56, 10);
+      break;
+
+    case 'shop_counter':
+      ctx.fillStyle = '#DEB887';
+      ctx.fillRect(0, 16, 64, 32);
+      ctx.fillStyle = '#D2691E';
+      ctx.fillRect(0, 44, 64, 4);
+      break;
   }
+
+  spriteCache[cacheKey] = canvas;
+  return canvas;
 }
 
-function drawTilledTile(ctx: CanvasRenderingContext2D, isWatered: boolean): void {
-  const baseColor = isWatered ? PALETTE.watered : PALETTE.tilled;
-  const darkColor = isWatered ? PALETTE.wateredDark : PALETTE.tilledDark;
+// ===== 작물 스프라이트 =====
+const CROP_COLORS: Record<string, { stem: string; fruit: string; highlight: string }> = {
+  parsnip: { stem: '#228B22', fruit: '#F5DEB3', highlight: '#FFFACD' },
+  cauliflower: { stem: '#228B22', fruit: '#F5F5F5', highlight: '#FFFFFF' },
+  potato: { stem: '#228B22', fruit: '#D2691E', highlight: '#DEB887' },
+  strawberry: { stem: '#228B22', fruit: '#FF4444', highlight: '#FF6666' },
+  melon: { stem: '#228B22', fruit: '#90EE90', highlight: '#98FB98' },
+  tomato: { stem: '#228B22', fruit: '#FF6347', highlight: '#FF7F50' },
+  corn: { stem: '#228B22', fruit: '#FFD700', highlight: '#FFEC8B' },
+  pumpkin: { stem: '#228B22', fruit: '#FF8C00', highlight: '#FFA500' },
+  eggplant: { stem: '#228B22', fruit: '#8B008B', highlight: '#9932CC' },
+  cranberry: { stem: '#228B22', fruit: '#DC143C', highlight: '#FF1493' },
+};
 
-  fillRect(ctx, 0, 0, TILE_SIZE, TILE_SIZE, baseColor);
-
-  // 밭고랑 패턴
-  for (let y = 4; y < TILE_SIZE; y += 6) {
-    fillRect(ctx, 2, y, TILE_SIZE - 4, 2, darkColor);
-  }
-
-  // 테두리
-  ctx.strokeStyle = darkColor;
-  ctx.lineWidth = 1;
-  ctx.strokeRect(0.5, 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
-}
-
-function drawWaterTile(ctx: CanvasRenderingContext2D, variant: number): void {
-  fillRect(ctx, 0, 0, TILE_SIZE, TILE_SIZE, PALETTE.water);
-
-  // 물결 패턴
-  const offset = (variant % 4) * 4;
-  for (let y = offset; y < TILE_SIZE; y += 8) {
-    for (let x = 0; x < TILE_SIZE; x += 8) {
-      fillRect(ctx, x, y, 4, 2, PALETTE.waterShine);
-    }
-  }
-
-  // 깊은 부분
-  fillRect(ctx, 4, 4, 8, 8, PALETTE.waterDeep);
-}
-
-function drawWoodFloorTile(ctx: CanvasRenderingContext2D): void {
-  fillRect(ctx, 0, 0, TILE_SIZE, TILE_SIZE, PALETTE.woodMedium);
-
-  // 나무 판자 패턴
-  for (let y = 0; y < TILE_SIZE; y += 8) {
-    ctx.strokeStyle = PALETTE.woodDark;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(TILE_SIZE, y);
-    ctx.stroke();
-  }
-
-  // 세로 이음새
-  ctx.beginPath();
-  ctx.moveTo(16, 0);
-  ctx.lineTo(16, TILE_SIZE);
-  ctx.stroke();
-}
-
-function drawFenceTile(ctx: CanvasRenderingContext2D): void {
-  // 배경 (투명)
-  ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
-
-  // 울타리 기둥
-  fillRect(ctx, 13, 4, 6, 24, PALETTE.woodMedium);
-  fillRect(ctx, 13, 4, 6, 2, PALETTE.woodLight);
-  fillRect(ctx, 13, 4, 2, 24, PALETTE.woodDark);
-}
-
-// ===== 작물 스프라이트 생성 =====
 export function generateCropSprite(cropId: string, stage: number, maxStage: number): HTMLCanvasElement {
   const cacheKey = `crop_${cropId}_${stage}`;
   if (spriteCache[cacheKey]) return spriteCache[cacheKey];
@@ -265,598 +749,264 @@ export function generateCropSprite(cropId: string, stage: number, maxStage: numb
   const canvas = createCanvas(TILE_SIZE, TILE_SIZE);
   const ctx = canvas.getContext('2d')!;
 
-  const progress = stage / maxStage;
+  const colors = CROP_COLORS[cropId] || CROP_COLORS.parsnip;
+  const growthPercent = stage / maxStage;
 
-  switch (cropId) {
-    case 'parsnip':
-      drawParsnip(ctx, progress);
-      break;
-    case 'cauliflower':
-      drawCauliflower(ctx, progress);
-      break;
-    case 'potato':
-      drawPotato(ctx, progress);
-      break;
-    case 'strawberry':
-      drawStrawberry(ctx, progress);
-      break;
-    case 'melon':
-      drawMelon(ctx, progress);
-      break;
-    case 'tomato':
-      drawTomato(ctx, progress);
-      break;
-    case 'corn':
-      drawCorn(ctx, progress);
-      break;
-    case 'pumpkin':
-      drawPumpkin(ctx, progress);
-      break;
-    case 'eggplant':
-      drawEggplant(ctx, progress);
-      break;
-    case 'cranberry':
-      drawCranberry(ctx, progress);
-      break;
-    default:
-      drawGenericCrop(ctx, progress);
+  if (growthPercent < 0.25) {
+    // 씨앗/새싹 단계
+    ctx.fillStyle = colors.stem;
+    ctx.fillRect(14, 26, 4, 6);
+    ctx.fillStyle = '#90EE90';
+    ctx.fillRect(12, 22, 8, 4);
+  } else if (growthPercent < 0.5) {
+    // 성장 중
+    ctx.fillStyle = colors.stem;
+    ctx.fillRect(14, 20, 4, 12);
+    ctx.fillStyle = '#228B22';
+    ctx.fillRect(10, 16, 12, 6);
+    ctx.fillRect(8, 18, 4, 4);
+    ctx.fillRect(20, 18, 4, 4);
+  } else if (growthPercent < 0.75) {
+    // 거의 다 자람
+    ctx.fillStyle = colors.stem;
+    ctx.fillRect(14, 14, 4, 18);
+    ctx.fillStyle = '#228B22';
+    ctx.fillRect(8, 10, 16, 8);
+    ctx.fillRect(6, 12, 4, 6);
+    ctx.fillRect(22, 12, 4, 6);
+  } else {
+    // 완전히 자람 (수확 가능)
+    ctx.fillStyle = colors.stem;
+    ctx.fillRect(14, 16, 4, 16);
+    ctx.fillStyle = '#228B22';
+    ctx.fillRect(8, 8, 16, 10);
+    ctx.fillRect(4, 12, 6, 6);
+    ctx.fillRect(22, 12, 6, 6);
+
+    // 열매
+    ctx.fillStyle = colors.fruit;
+    ctx.beginPath();
+    ctx.arc(16, 10, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = colors.highlight;
+    ctx.beginPath();
+    ctx.arc(14, 8, 2, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   spriteCache[cacheKey] = canvas;
   return canvas;
 }
 
-function drawSprout(ctx: CanvasRenderingContext2D, height: number): void {
-  const baseY = 28;
-  fillRect(ctx, 15, baseY - height, 2, height, PALETTE.stem);
-  // 작은 잎
-  if (height > 4) {
-    fillRect(ctx, 13, baseY - height + 2, 3, 2, PALETTE.sprout);
-    fillRect(ctx, 16, baseY - height + 4, 3, 2, PALETTE.sprout);
-  }
+// ===== NPC 스프라이트 =====
+const NPC_PALETTE: Record<string, Record<string, string>> = {
+  pierre: {
+    'H': '#4A3728',  // 머리카락
+    'h': '#362818',
+    'L': '#5A4738',
+    'S': '#FFE4C4',
+    's': '#E8C8A8',
+    'W': '#FFF0DC',
+    'E': '#2F4F4F',
+    'e': '#3F5F5F',
+    'w': '#FFFFFF',
+    'C': '#228B22',  // 초록 앞치마
+    'c': '#1B6B1B',
+    'V': '#32CD32',
+    'P': '#4A5568',
+    'p': '#2D3748',
+    'B': '#2F1810',
+    'b': '#1F1008',
+    'X': 'rgba(0,0,0,0.2)',
+  },
+  robin: {
+    'H': '#FF6B35',  // 주황 머리카락
+    'h': '#E55525',
+    'L': '#FF8B55',
+    'S': '#FFE4C4',
+    's': '#E8C8A8',
+    'W': '#FFF0DC',
+    'E': '#4169E1',
+    'e': '#5179F1',
+    'w': '#FFFFFF',
+    'C': '#4682B4',  // 파란 옷
+    'c': '#36728A',
+    'V': '#5692C4',
+    'P': '#8B4513',
+    'p': '#6B3503',
+    'B': '#2F1810',
+    'b': '#1F1008',
+    'X': 'rgba(0,0,0,0.2)',
+  },
+};
+
+export function generateNPCSprite(npcId: string, direction: Direction, frame: number): HTMLCanvasElement {
+  const cacheKey = `npc_${npcId}_${direction}_${frame}`;
+  if (spriteCache[cacheKey]) return spriteCache[cacheKey];
+
+  const canvas = createCanvas(TILE_SIZE, TILE_SIZE);
+  const ctx = canvas.getContext('2d')!;
+
+  const palette = NPC_PALETTE[npcId] || NPC_PALETTE.pierre;
+
+  // NPC도 플레이어와 비슷한 형태로 그림 (귀 없음)
+  const npcSprite = [
+    '.....................',
+    '.......HLLLLH........',
+    '......HhHHHHhH.......',
+    '......HHHHHHHH.......',
+    '.....HhHHLLHHhH......',
+    '.....HHHHHHHHHH......',
+    '.....SSSwwSSSSS......',
+    '.....SSEeSSEeSS......',
+    '.....SSSSSsSSSS......',
+    '.....sSSSSSSSSs......',
+    '......SSSSSSSS.......',
+    '......sCCCCCCs.......',
+    '.....cCCCCCCCCc......',
+    '.....CCCCCCCCCC......',
+    '.....cCCCCCCCCc......',
+    '.....CVCCCCCCVC......',
+    '.....cCCCCCCCCc......',
+    '......CCCCCCCC.......',
+    '......cPPPPPPc.......',
+    '.......PPPPPP........',
+    '.......pPPPPp........',
+    '.......PPPPPP........',
+    '.......pPppPp........',
+    '........PP.PP........',
+    '........Pp.pP........',
+    '........BB.BB........',
+    '........Bb.bB........',
+    '........XX.XX........',
+    '.....................',
+    '.....................',
+    '.....................',
+    '.....................',
+  ];
+
+  drawPixelArt(ctx, npcSprite, palette, 5, 0);
+
+  spriteCache[cacheKey] = canvas;
+  return canvas;
 }
 
-function drawParsnip(ctx: CanvasRenderingContext2D, progress: number): void {
-  if (progress < 0.5) {
-    drawSprout(ctx, 4 + progress * 8);
-  } else {
-    // 잎
-    const leafHeight = 12 + (progress - 0.5) * 8;
-    fillRect(ctx, 14, 28 - leafHeight, 4, leafHeight - 4, PALETTE.leaf);
-    fillRect(ctx, 10, 28 - leafHeight + 4, 4, 6, PALETTE.leaf);
-    fillRect(ctx, 18, 28 - leafHeight + 6, 4, 4, PALETTE.leaf);
-
-    if (progress >= 1) {
-      // 파스닙 뿌리 (살짝 보이게)
-      fillRect(ctx, 14, 26, 4, 4, PALETTE.parsnip);
-    }
-  }
-}
-
-function drawCauliflower(ctx: CanvasRenderingContext2D, progress: number): void {
-  if (progress < 0.3) {
-    drawSprout(ctx, 4 + progress * 10);
-  } else if (progress < 0.7) {
-    // 잎 성장
-    const size = (progress - 0.3) * 25;
-    fillRect(ctx, 16 - size / 2, 26 - size, size, size, PALETTE.cauliflowerLeaf);
-  } else {
-    // 큰 잎
-    fillRect(ctx, 8, 16, 16, 12, PALETTE.cauliflowerLeaf);
-    fillRect(ctx, 6, 20, 4, 6, PALETTE.cauliflowerLeaf);
-    fillRect(ctx, 22, 20, 4, 6, PALETTE.cauliflowerLeaf);
-
-    if (progress >= 1) {
-      // 콜리플라워 꽃
-      fillRect(ctx, 10, 10, 12, 8, PALETTE.cauliflower);
-      fillRect(ctx, 12, 8, 8, 4, PALETTE.cauliflower);
-    }
-  }
-}
-
-function drawPotato(ctx: CanvasRenderingContext2D, progress: number): void {
-  if (progress < 0.5) {
-    drawSprout(ctx, 4 + progress * 12);
-  } else {
-    // 잎
-    fillRect(ctx, 12, 18, 8, 10, PALETTE.leaf);
-    fillRect(ctx, 10, 20, 4, 6, PALETTE.leafDark);
-    fillRect(ctx, 18, 22, 4, 4, PALETTE.leafDark);
-
-    if (progress >= 1) {
-      // 감자 (땅에서 살짝)
-      fillRect(ctx, 8, 26, 5, 4, PALETTE.potato);
-      fillRect(ctx, 19, 27, 4, 3, PALETTE.potato);
-    }
-  }
-}
-
-function drawStrawberry(ctx: CanvasRenderingContext2D, progress: number): void {
-  if (progress < 0.4) {
-    drawSprout(ctx, 4 + progress * 10);
-  } else {
-    // 덤불
-    fillRect(ctx, 10, 18, 12, 10, PALETTE.leaf);
-    fillRect(ctx, 8, 22, 4, 4, PALETTE.leafDark);
-    fillRect(ctx, 20, 22, 4, 4, PALETTE.leafDark);
-
-    if (progress >= 1) {
-      // 딸기 열매
-      fillRect(ctx, 12, 14, 4, 5, PALETTE.strawberry);
-      fillRect(ctx, 11, 15, 1, 3, PALETTE.strawberryDark);
-      fillRect(ctx, 18, 16, 3, 4, PALETTE.strawberry);
-      // 씨앗 점
-      setPixel(ctx, 13, 16, PALETTE.strawberrySeed, 1);
-      setPixel(ctx, 14, 17, PALETTE.strawberrySeed, 1);
-    }
-  }
-}
-
-function drawMelon(ctx: CanvasRenderingContext2D, progress: number): void {
-  if (progress < 0.3) {
-    drawSprout(ctx, 4 + progress * 10);
-  } else if (progress < 0.7) {
-    // 덩굴
-    fillRect(ctx, 8, 24, 16, 4, PALETTE.leaf);
-    fillRect(ctx, 14, 20, 4, 6, PALETTE.stem);
-  } else {
-    // 덩굴 + 멜론
-    fillRect(ctx, 6, 24, 20, 4, PALETTE.leaf);
-    fillRect(ctx, 4, 22, 4, 4, PALETTE.leafDark);
-    fillRect(ctx, 24, 22, 4, 4, PALETTE.leafDark);
-
-    if (progress >= 1) {
-      // 멜론
-      fillRect(ctx, 10, 14, 12, 10, PALETTE.melon);
-      fillRect(ctx, 12, 12, 8, 4, PALETTE.melon);
-      // 줄무늬
-      fillRect(ctx, 14, 14, 2, 10, PALETTE.melonStripe);
-      fillRect(ctx, 18, 14, 2, 10, PALETTE.melonStripe);
-    }
-  }
-}
-
-function drawTomato(ctx: CanvasRenderingContext2D, progress: number): void {
-  if (progress < 0.3) {
-    drawSprout(ctx, 4 + progress * 12);
-  } else {
-    // 줄기
-    fillRect(ctx, 15, 8, 2, 20, PALETTE.stem);
-
-    // 잎
-    fillRect(ctx, 10, 16, 6, 4, PALETTE.leaf);
-    fillRect(ctx, 16, 12, 6, 4, PALETTE.leaf);
-    fillRect(ctx, 8, 22, 6, 4, PALETTE.leaf);
-    fillRect(ctx, 18, 20, 6, 4, PALETTE.leaf);
-
-    if (progress >= 1) {
-      // 토마토 열매
-      fillRect(ctx, 10, 8, 5, 5, PALETTE.tomato);
-      fillRect(ctx, 11, 7, 3, 2, PALETTE.tomatoHighlight);
-      fillRect(ctx, 18, 12, 4, 4, PALETTE.tomato);
-      fillRect(ctx, 8, 18, 4, 4, PALETTE.tomato);
-    }
-  }
-}
-
-function drawCorn(ctx: CanvasRenderingContext2D, progress: number): void {
-  if (progress < 0.3) {
-    drawSprout(ctx, 4 + progress * 14);
-  } else {
-    // 줄기 (키가 큼)
-    const height = 20 + (progress - 0.3) * 10;
-    fillRect(ctx, 14, 28 - height, 4, height, PALETTE.stem);
-
-    // 잎
-    fillRect(ctx, 8, 28 - height + 6, 8, 3, PALETTE.cornHusk);
-    fillRect(ctx, 16, 28 - height + 10, 8, 3, PALETTE.cornHusk);
-    fillRect(ctx, 6, 28 - height + 16, 10, 3, PALETTE.cornHusk);
-
-    if (progress >= 1) {
-      // 옥수수
-      fillRect(ctx, 18, 10, 5, 10, PALETTE.corn);
-      fillRect(ctx, 17, 8, 7, 3, PALETTE.cornHusk);
-    }
-  }
-}
-
-function drawPumpkin(ctx: CanvasRenderingContext2D, progress: number): void {
-  if (progress < 0.3) {
-    drawSprout(ctx, 4 + progress * 10);
-  } else if (progress < 0.7) {
-    // 덩굴
-    fillRect(ctx, 6, 22, 20, 6, PALETTE.leaf);
-    fillRect(ctx, 14, 18, 4, 6, PALETTE.stem);
-  } else {
-    // 덩굴
-    fillRect(ctx, 4, 24, 24, 4, PALETTE.leaf);
-
-    if (progress >= 1) {
-      // 호박
-      fillRect(ctx, 8, 12, 16, 14, PALETTE.pumpkin);
-      fillRect(ctx, 10, 10, 12, 4, PALETTE.pumpkin);
-      // 줄
-      fillRect(ctx, 14, 12, 2, 12, PALETTE.pumpkinDark);
-      fillRect(ctx, 18, 14, 2, 10, PALETTE.pumpkinDark);
-      fillRect(ctx, 10, 14, 2, 10, PALETTE.pumpkinDark);
-      // 꼭지
-      fillRect(ctx, 14, 8, 4, 4, PALETTE.pumpkinStem);
-    }
-  }
-}
-
-function drawEggplant(ctx: CanvasRenderingContext2D, progress: number): void {
-  if (progress < 0.4) {
-    drawSprout(ctx, 4 + progress * 10);
-  } else {
-    // 줄기
-    fillRect(ctx, 15, 12, 2, 16, PALETTE.stem);
-    // 잎
-    fillRect(ctx, 10, 18, 6, 4, PALETTE.leaf);
-    fillRect(ctx, 16, 14, 6, 4, PALETTE.leaf);
-
-    if (progress >= 1) {
-      // 가지
-      fillRect(ctx, 8, 8, 6, 10, PALETTE.eggplant);
-      fillRect(ctx, 9, 6, 4, 3, PALETTE.eggplantHighlight);
-      fillRect(ctx, 18, 12, 5, 8, PALETTE.eggplant);
-    }
-  }
-}
-
-function drawCranberry(ctx: CanvasRenderingContext2D, progress: number): void {
-  if (progress < 0.4) {
-    drawSprout(ctx, 4 + progress * 10);
-  } else {
-    // 덤불
-    fillRect(ctx, 8, 20, 16, 8, PALETTE.leaf);
-    fillRect(ctx, 6, 22, 4, 4, PALETTE.leafDark);
-    fillRect(ctx, 22, 22, 4, 4, PALETTE.leafDark);
-
-    if (progress >= 1) {
-      // 크랜베리 열매
-      fillRect(ctx, 10, 16, 3, 3, PALETTE.cranberry);
-      fillRect(ctx, 15, 14, 3, 3, PALETTE.cranberry);
-      fillRect(ctx, 20, 16, 3, 3, PALETTE.cranberry);
-      fillRect(ctx, 12, 18, 3, 3, PALETTE.cranberryDark);
-      fillRect(ctx, 18, 19, 3, 3, PALETTE.cranberryDark);
-    }
-  }
-}
-
-function drawGenericCrop(ctx: CanvasRenderingContext2D, progress: number): void {
-  const height = 4 + progress * 20;
-  fillRect(ctx, 15, 28 - height, 2, height, PALETTE.stem);
-  if (progress > 0.3) {
-    fillRect(ctx, 12, 28 - height + 4, 4, 3, PALETTE.leaf);
-    fillRect(ctx, 16, 28 - height + 6, 4, 3, PALETTE.leaf);
-  }
-}
-
-// ===== 도구 스프라이트 생성 =====
+// ===== 도구 스프라이트 =====
 export function generateToolSprite(toolType: string): HTMLCanvasElement {
   const cacheKey = `tool_${toolType}`;
   if (spriteCache[cacheKey]) return spriteCache[cacheKey];
 
-  const canvas = createCanvas(32, 32);
+  const canvas = createCanvas(TILE_SIZE, TILE_SIZE);
   const ctx = canvas.getContext('2d')!;
 
   switch (toolType) {
     case 'hoe':
-      drawHoe(ctx);
+      // 괭이
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(14, 8, 4, 20);
+      ctx.fillStyle = '#A9A9A9';
+      ctx.fillRect(8, 4, 16, 6);
+      ctx.fillStyle = '#C0C0C0';
+      ctx.fillRect(10, 5, 12, 3);
       break;
     case 'wateringCan':
-      drawWateringCan(ctx);
+      // 물뿌리개
+      ctx.fillStyle = '#4682B4';
+      ctx.fillRect(8, 12, 16, 14);
+      ctx.fillRect(22, 16, 6, 4);
+      ctx.fillStyle = '#5F9EA0';
+      ctx.fillRect(10, 14, 12, 10);
+      ctx.fillStyle = '#87CEEB';
+      ctx.fillRect(12, 8, 8, 6);
       break;
     case 'axe':
-      drawAxe(ctx);
+      // 도끼
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(14, 10, 4, 18);
+      ctx.fillStyle = '#A9A9A9';
+      ctx.fillRect(6, 4, 14, 10);
+      ctx.fillStyle = '#C0C0C0';
+      ctx.fillRect(8, 6, 10, 6);
       break;
     case 'pickaxe':
-      drawPickaxe(ctx);
+      // 곡괭이
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(14, 10, 4, 18);
+      ctx.fillStyle = '#A9A9A9';
+      ctx.fillRect(4, 4, 24, 6);
+      ctx.fillStyle = '#C0C0C0';
+      ctx.fillRect(6, 5, 20, 3);
       break;
     case 'scythe':
-      drawScythe(ctx);
+      // 낫
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(18, 8, 4, 20);
+      ctx.fillStyle = '#A9A9A9';
+      ctx.beginPath();
+      ctx.moveTo(6, 6);
+      ctx.quadraticCurveTo(6, 16, 18, 12);
+      ctx.lineTo(18, 8);
+      ctx.quadraticCurveTo(8, 10, 8, 4);
+      ctx.fill();
       break;
     default:
-      fillRect(ctx, 8, 8, 16, 16, '#888');
+      ctx.fillStyle = '#808080';
+      ctx.fillRect(8, 8, 16, 16);
   }
 
   spriteCache[cacheKey] = canvas;
   return canvas;
 }
 
-function drawHoe(ctx: CanvasRenderingContext2D): void {
-  // 손잡이
-  fillRect(ctx, 14, 6, 4, 20, PALETTE.woodMedium);
-  fillRect(ctx, 14, 6, 1, 20, PALETTE.woodLight);
-  // 머리
-  fillRect(ctx, 8, 24, 16, 4, '#A0A0A0');
-  fillRect(ctx, 8, 24, 16, 1, '#C0C0C0');
-}
-
-function drawWateringCan(ctx: CanvasRenderingContext2D): void {
-  // 몸체
-  fillRect(ctx, 8, 12, 14, 14, '#6B7B8C');
-  fillRect(ctx, 8, 12, 14, 2, '#8B9BAC');
-  // 주둥이
-  fillRect(ctx, 20, 8, 8, 4, '#6B7B8C');
-  fillRect(ctx, 26, 6, 4, 4, '#6B7B8C');
-  // 손잡이
-  fillRect(ctx, 4, 10, 6, 3, '#6B7B8C');
-  fillRect(ctx, 2, 12, 4, 8, '#6B7B8C');
-}
-
-function drawAxe(ctx: CanvasRenderingContext2D): void {
-  // 손잡이
-  fillRect(ctx, 14, 8, 4, 18, PALETTE.woodMedium);
-  fillRect(ctx, 14, 8, 1, 18, PALETTE.woodLight);
-  // 도끼날
-  fillRect(ctx, 18, 6, 8, 10, '#A0A0A0');
-  fillRect(ctx, 22, 4, 6, 4, '#A0A0A0');
-  fillRect(ctx, 18, 6, 8, 2, '#C0C0C0');
-}
-
-function drawPickaxe(ctx: CanvasRenderingContext2D): void {
-  // 손잡이
-  fillRect(ctx, 14, 10, 4, 16, PALETTE.woodMedium);
-  fillRect(ctx, 14, 10, 1, 16, PALETTE.woodLight);
-  // 곡괭이 머리
-  fillRect(ctx, 6, 6, 20, 6, '#A0A0A0');
-  fillRect(ctx, 4, 8, 4, 3, '#A0A0A0');
-  fillRect(ctx, 24, 8, 4, 3, '#A0A0A0');
-  fillRect(ctx, 6, 6, 20, 2, '#C0C0C0');
-}
-
-function drawScythe(ctx: CanvasRenderingContext2D): void {
-  // 손잡이
-  fillRect(ctx, 6, 8, 4, 18, PALETTE.woodMedium);
-  fillRect(ctx, 6, 8, 1, 18, PALETTE.woodLight);
-  // 날
-  fillRect(ctx, 8, 4, 18, 4, '#A0A0A0');
-  fillRect(ctx, 22, 6, 6, 8, '#A0A0A0');
-  fillRect(ctx, 8, 4, 18, 1, '#C0C0C0');
-}
-
-// ===== 아이템 스프라이트 생성 =====
+// ===== 아이템 스프라이트 =====
 export function generateItemSprite(itemId: string): HTMLCanvasElement {
   const cacheKey = `item_${itemId}`;
   if (spriteCache[cacheKey]) return spriteCache[cacheKey];
 
-  const canvas = createCanvas(32, 32);
+  const canvas = createCanvas(TILE_SIZE, TILE_SIZE);
   const ctx = canvas.getContext('2d')!;
 
-  // 씨앗인 경우
-  if (itemId.endsWith('_seeds')) {
-    drawSeedPacket(ctx, itemId.replace('_seeds', ''));
-  } else {
-    // 작물 아이템
-    drawCropItem(ctx, itemId);
+  // 씨앗류
+  if (itemId.includes('_seeds')) {
+    ctx.fillStyle = '#DEB887';
+    ctx.fillRect(10, 10, 12, 14);
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(12, 12, 8, 10);
+    // 씨앗 그림
+    ctx.fillStyle = '#556B2F';
+    ctx.beginPath();
+    ctx.arc(16, 17, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // 작물류
+  else if (CROP_COLORS[itemId]) {
+    const colors = CROP_COLORS[itemId];
+    ctx.fillStyle = colors.fruit;
+    ctx.beginPath();
+    ctx.arc(16, 16, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = colors.highlight;
+    ctx.beginPath();
+    ctx.arc(12, 12, 4, 0, Math.PI * 2);
+    ctx.fill();
+    // 꼭지
+    ctx.fillStyle = '#228B22';
+    ctx.fillRect(14, 4, 4, 4);
+  }
+  // 기본 아이템
+  else {
+    ctx.fillStyle = '#808080';
+    ctx.fillRect(8, 8, 16, 16);
+    ctx.fillStyle = '#A0A0A0';
+    ctx.fillRect(10, 10, 12, 12);
   }
 
   spriteCache[cacheKey] = canvas;
   return canvas;
 }
 
-function drawSeedPacket(ctx: CanvasRenderingContext2D, cropId: string): void {
-  // 봉투
-  fillRect(ctx, 6, 4, 20, 24, PALETTE.uiBg);
-  fillRect(ctx, 6, 4, 20, 2, PALETTE.uiBorder);
-  fillRect(ctx, 6, 4, 2, 24, PALETTE.uiBorder);
-  fillRect(ctx, 24, 4, 2, 24, PALETTE.uiBorder);
-  fillRect(ctx, 6, 26, 20, 2, PALETTE.uiBorder);
-
-  // 작물 색상으로 꾸미기
-  const cropColors: Record<string, string> = {
-    parsnip: PALETTE.parsnip,
-    cauliflower: PALETTE.cauliflower,
-    potato: PALETTE.potato,
-    strawberry: PALETTE.strawberry,
-    melon: PALETTE.melon,
-    tomato: PALETTE.tomato,
-    corn: PALETTE.corn,
-    pumpkin: PALETTE.pumpkin,
-    eggplant: PALETTE.eggplant,
-    cranberry: PALETTE.cranberry,
-  };
-
-  const color = cropColors[cropId] || PALETTE.leaf;
-  fillRect(ctx, 10, 10, 12, 12, color);
-
-  // 씨앗 점
-  fillRect(ctx, 13, 14, 2, 2, PALETTE.woodDark);
-  fillRect(ctx, 17, 16, 2, 2, PALETTE.woodDark);
-  fillRect(ctx, 15, 18, 2, 2, PALETTE.woodDark);
-}
-
-function drawCropItem(ctx: CanvasRenderingContext2D, cropId: string): void {
-  switch (cropId) {
-    case 'parsnip':
-      fillRect(ctx, 12, 4, 8, 24, PALETTE.parsnip);
-      fillRect(ctx, 10, 8, 4, 16, PALETTE.parsnipDark);
-      fillRect(ctx, 14, 2, 4, 4, PALETTE.leaf);
-      break;
-    case 'cauliflower':
-      fillRect(ctx, 8, 12, 16, 12, PALETTE.cauliflower);
-      fillRect(ctx, 10, 8, 12, 6, PALETTE.cauliflower);
-      fillRect(ctx, 6, 20, 6, 8, PALETTE.cauliflowerLeaf);
-      fillRect(ctx, 20, 20, 6, 8, PALETTE.cauliflowerLeaf);
-      break;
-    case 'potato':
-      fillRect(ctx, 8, 10, 16, 14, PALETTE.potato);
-      fillRect(ctx, 10, 8, 12, 4, PALETTE.potato);
-      setPixel(ctx, 12, 14, PALETTE.potatoDark, 2);
-      setPixel(ctx, 18, 16, PALETTE.potatoDark, 2);
-      break;
-    case 'strawberry':
-      fillRect(ctx, 10, 8, 12, 16, PALETTE.strawberry);
-      fillRect(ctx, 12, 6, 8, 4, PALETTE.strawberry);
-      fillRect(ctx, 14, 4, 4, 4, PALETTE.leaf);
-      setPixel(ctx, 12, 12, PALETTE.strawberrySeed, 2);
-      setPixel(ctx, 16, 14, PALETTE.strawberrySeed, 2);
-      setPixel(ctx, 14, 18, PALETTE.strawberrySeed, 2);
-      break;
-    case 'melon':
-      fillRect(ctx, 6, 8, 20, 18, PALETTE.melon);
-      fillRect(ctx, 8, 6, 16, 4, PALETTE.melon);
-      fillRect(ctx, 12, 8, 2, 16, PALETTE.melonStripe);
-      fillRect(ctx, 18, 8, 2, 16, PALETTE.melonStripe);
-      break;
-    case 'tomato':
-      fillRect(ctx, 8, 8, 16, 16, PALETTE.tomato);
-      fillRect(ctx, 10, 6, 12, 4, PALETTE.tomato);
-      fillRect(ctx, 10, 6, 4, 2, PALETTE.tomatoHighlight);
-      fillRect(ctx, 14, 4, 4, 4, PALETTE.leaf);
-      break;
-    case 'corn':
-      fillRect(ctx, 10, 4, 12, 22, PALETTE.corn);
-      fillRect(ctx, 8, 8, 4, 14, PALETTE.cornHusk);
-      fillRect(ctx, 20, 6, 4, 16, PALETTE.cornHusk);
-      // 알갱이
-      for (let y = 8; y < 22; y += 3) {
-        for (let x = 12; x < 20; x += 3) {
-          setPixel(ctx, x, y, PALETTE.cornDark, 2);
-        }
-      }
-      break;
-    case 'pumpkin':
-      fillRect(ctx, 4, 10, 24, 18, PALETTE.pumpkin);
-      fillRect(ctx, 6, 8, 20, 4, PALETTE.pumpkin);
-      fillRect(ctx, 12, 10, 2, 16, PALETTE.pumpkinDark);
-      fillRect(ctx, 18, 10, 2, 16, PALETTE.pumpkinDark);
-      fillRect(ctx, 14, 4, 4, 6, PALETTE.pumpkinStem);
-      break;
-    case 'eggplant':
-      fillRect(ctx, 10, 8, 12, 20, PALETTE.eggplant);
-      fillRect(ctx, 12, 6, 8, 4, PALETTE.eggplant);
-      fillRect(ctx, 10, 8, 4, 6, PALETTE.eggplantHighlight);
-      fillRect(ctx, 14, 4, 4, 4, PALETTE.leaf);
-      break;
-    case 'cranberry':
-      // 여러 개의 작은 열매
-      fillRect(ctx, 6, 12, 6, 6, PALETTE.cranberry);
-      fillRect(ctx, 14, 8, 6, 6, PALETTE.cranberry);
-      fillRect(ctx, 20, 14, 6, 6, PALETTE.cranberry);
-      fillRect(ctx, 10, 18, 6, 6, PALETTE.cranberryDark);
-      fillRect(ctx, 18, 20, 6, 6, PALETTE.cranberryDark);
-      break;
-    default:
-      fillRect(ctx, 8, 8, 16, 16, PALETTE.leaf);
-  }
-}
-
-// ===== 건물 스프라이트 생성 =====
-export function generateBuildingSprite(buildingType: string): HTMLCanvasElement {
-  const cacheKey = `building_${buildingType}`;
-  if (spriteCache[cacheKey]) return spriteCache[cacheKey];
-
-  let width = TILE_SIZE * 3;
-  let height = TILE_SIZE * 3;
-
-  if (buildingType === 'house') {
-    width = TILE_SIZE * 5;
-    height = TILE_SIZE * 4;
-  }
-
-  const canvas = createCanvas(width, height);
-  const ctx = canvas.getContext('2d')!;
-
-  switch (buildingType) {
-    case 'house':
-      drawHouse(ctx);
-      break;
-    case 'shipping_bin':
-      drawShippingBin(ctx);
-      break;
-    case 'shop':
-      drawShop(ctx);
-      break;
-  }
-
-  spriteCache[cacheKey] = canvas;
-  return canvas;
-}
-
-function drawHouse(ctx: CanvasRenderingContext2D): void {
-  const w = TILE_SIZE * 5;
-  const h = TILE_SIZE * 4;
-
-  // 벽
-  fillRect(ctx, 16, 48, w - 32, h - 48, PALETTE.woodLight);
-  fillRect(ctx, 16, 48, 4, h - 48, PALETTE.woodDark);
-
-  // 지붕
-  ctx.fillStyle = PALETTE.roof;
-  ctx.beginPath();
-  ctx.moveTo(0, 56);
-  ctx.lineTo(w / 2, 8);
-  ctx.lineTo(w, 56);
-  ctx.closePath();
-  ctx.fill();
-
-  // 지붕 그림자
-  ctx.fillStyle = PALETTE.roofDark;
-  ctx.beginPath();
-  ctx.moveTo(0, 56);
-  ctx.lineTo(w / 2, 8);
-  ctx.lineTo(w / 2, 16);
-  ctx.lineTo(8, 56);
-  ctx.closePath();
-  ctx.fill();
-
-  // 문
-  fillRect(ctx, w / 2 - 12, h - 40, 24, 38, PALETTE.woodDark);
-  fillRect(ctx, w / 2 - 10, h - 38, 20, 34, PALETTE.woodMedium);
-  // 손잡이
-  fillRect(ctx, w / 2 + 4, h - 22, 4, 4, PALETTE.corn);
-
-  // 창문
-  fillRect(ctx, 32, 64, 24, 24, PALETTE.windowFrame);
-  fillRect(ctx, 34, 66, 20, 20, PALETTE.window);
-  fillRect(ctx, 43, 66, 2, 20, PALETTE.windowFrame);
-  fillRect(ctx, 34, 75, 20, 2, PALETTE.windowFrame);
-
-  fillRect(ctx, w - 56, 64, 24, 24, PALETTE.windowFrame);
-  fillRect(ctx, w - 54, 66, 20, 20, PALETTE.window);
-  fillRect(ctx, w - 45, 66, 2, 20, PALETTE.windowFrame);
-  fillRect(ctx, w - 54, 75, 20, 2, PALETTE.windowFrame);
-}
-
-function drawShippingBin(ctx: CanvasRenderingContext2D): void {
-  // 박스 본체
-  fillRect(ctx, 8, 24, 80, 56, PALETTE.woodMedium);
-  fillRect(ctx, 8, 24, 80, 8, PALETTE.woodLight);
-  fillRect(ctx, 8, 24, 8, 56, PALETTE.woodDark);
-
-  // 뚜껑
-  fillRect(ctx, 4, 16, 88, 12, PALETTE.woodDark);
-  fillRect(ctx, 4, 16, 88, 4, PALETTE.woodMedium);
-
-  // 금속 장식
-  fillRect(ctx, 20, 40, 8, 24, '#A0A0A0');
-  fillRect(ctx, 68, 40, 8, 24, '#A0A0A0');
-}
-
-function drawShop(ctx: CanvasRenderingContext2D): void {
-  const w = TILE_SIZE * 3;
-  const h = TILE_SIZE * 3;
-
-  // 벽
-  fillRect(ctx, 0, 24, w, h - 24, PALETTE.woodLight);
-
-  // 지붕
-  fillRect(ctx, -8, 16, w + 16, 16, PALETTE.roof);
-  fillRect(ctx, -8, 16, w + 16, 4, PALETTE.roofDark);
-
-  // 카운터
-  fillRect(ctx, 8, h - 24, w - 16, 8, PALETTE.woodMedium);
-
-  // 간판
-  fillRect(ctx, w / 2 - 20, 24, 40, 20, PALETTE.uiBg);
-  fillRect(ctx, w / 2 - 20, 24, 40, 2, PALETTE.uiBorder);
-}
-
-// ===== UI 스프라이트 생성 =====
-export function generateUISprite(uiType: string, width: number = 32, height: number = 32): HTMLCanvasElement {
+// ===== UI 스프라이트 =====
+export function generateUISprite(uiType: string, width: number, height: number): HTMLCanvasElement {
   const cacheKey = `ui_${uiType}_${width}_${height}`;
   if (spriteCache[cacheKey]) return spriteCache[cacheKey];
 
@@ -864,124 +1014,43 @@ export function generateUISprite(uiType: string, width: number = 32, height: num
   const ctx = canvas.getContext('2d')!;
 
   switch (uiType) {
+    case 'panel':
+      // 패널 배경
+      ctx.fillStyle = '#2D2D44';
+      ctx.fillRect(0, 0, width, height);
+      // 테두리
+      ctx.strokeStyle = '#5D5D8A';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(1, 1, width - 2, height - 2);
+      // 내부 테두리
+      ctx.strokeStyle = '#3D3D5A';
+      ctx.strokeRect(3, 3, width - 6, height - 6);
+      break;
     case 'slot':
-      drawSlot(ctx, width, height, false);
+      // 슬롯 배경
+      ctx.fillStyle = '#1A1A2E';
+      ctx.fillRect(0, 0, width, height);
+      ctx.strokeStyle = '#4A4A6A';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(0, 0, width, height);
       break;
     case 'slot_selected':
-      drawSlot(ctx, width, height, true);
-      break;
-    case 'panel':
-      drawPanel(ctx, width, height);
+      // 선택된 슬롯
+      ctx.fillStyle = '#2A2A4E';
+      ctx.fillRect(0, 0, width, height);
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(1, 1, width - 2, height - 2);
       break;
     case 'button':
-      drawButton(ctx, width, height);
+      // 버튼
+      ctx.fillStyle = '#4A4A6A';
+      ctx.fillRect(0, 0, width, height);
+      ctx.fillStyle = '#5A5A7A';
+      ctx.fillRect(2, 2, width - 4, height / 2 - 2);
+      ctx.strokeStyle = '#6A6A8A';
+      ctx.strokeRect(0, 0, width, height);
       break;
-  }
-
-  spriteCache[cacheKey] = canvas;
-  return canvas;
-}
-
-function drawSlot(ctx: CanvasRenderingContext2D, w: number, h: number, selected: boolean): void {
-  // 배경
-  fillRect(ctx, 0, 0, w, h, PALETTE.uiBg);
-
-  // 테두리
-  ctx.strokeStyle = selected ? PALETTE.uiSelected : PALETTE.uiBorder;
-  ctx.lineWidth = selected ? 3 : 2;
-  ctx.strokeRect(1, 1, w - 2, h - 2);
-
-  // 내부 그림자
-  fillRect(ctx, 2, 2, w - 4, 2, PALETTE.uiBgDark);
-  fillRect(ctx, 2, 2, 2, h - 4, PALETTE.uiBgDark);
-}
-
-function drawPanel(ctx: CanvasRenderingContext2D, w: number, h: number): void {
-  // 배경
-  fillRect(ctx, 0, 0, w, h, PALETTE.uiBg);
-
-  // 테두리
-  fillRect(ctx, 0, 0, w, 4, PALETTE.uiBorder);
-  fillRect(ctx, 0, h - 4, w, 4, PALETTE.uiBorder);
-  fillRect(ctx, 0, 0, 4, h, PALETTE.uiBorder);
-  fillRect(ctx, w - 4, 0, 4, h, PALETTE.uiBorder);
-
-  // 코너 장식
-  fillRect(ctx, 0, 0, 8, 8, PALETTE.uiBorderDark);
-  fillRect(ctx, w - 8, 0, 8, 8, PALETTE.uiBorderDark);
-  fillRect(ctx, 0, h - 8, 8, 8, PALETTE.uiBorderDark);
-  fillRect(ctx, w - 8, h - 8, 8, 8, PALETTE.uiBorderDark);
-}
-
-function drawButton(ctx: CanvasRenderingContext2D, w: number, h: number): void {
-  // 배경
-  fillRect(ctx, 0, 0, w, h, PALETTE.uiButton);
-  fillRect(ctx, 0, 0, w, 4, PALETTE.uiButtonHover);
-  fillRect(ctx, 0, h - 4, w, 4, PALETTE.uiButtonPress);
-
-  // 테두리
-  ctx.strokeStyle = PALETTE.uiBorder;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(1, 1, w - 2, h - 2);
-}
-
-// ===== NPC 스프라이트 생성 =====
-export function generateNPCSprite(npcId: string, direction: Direction): HTMLCanvasElement {
-  const cacheKey = `npc_${npcId}_${direction}`;
-  if (spriteCache[cacheKey]) return spriteCache[cacheKey];
-
-  const canvas = createCanvas(TILE_SIZE, TILE_SIZE);
-  const ctx = canvas.getContext('2d')!;
-
-  // NPC별 색상
-  const npcColors: Record<string, { hair: string; shirt: string }> = {
-    pierre: { hair: '#4A3728', shirt: '#2E7D32' },
-    robin: { hair: '#D2691E', shirt: '#8B4513' },
-  };
-
-  const colors = npcColors[npcId] || { hair: '#333', shirt: '#666' };
-
-  // 그림자
-  fillRect(ctx, 8, 28, 16, 4, PALETTE.shadow);
-
-  // 신발
-  fillRect(ctx, 10, 26, 4, 3, PALETTE.shoes);
-  fillRect(ctx, 18, 26, 4, 3, PALETTE.shoes);
-
-  // 바지
-  fillRect(ctx, 10, 20, 12, 7, '#4A4A4A');
-
-  // 상의
-  fillRect(ctx, 9, 12, 14, 9, colors.shirt);
-  fillRect(ctx, 6, 14, 3, 6, colors.shirt);
-  fillRect(ctx, 23, 14, 3, 6, colors.shirt);
-
-  // 손
-  if (direction !== 'up') {
-    fillRect(ctx, 6, 19, 3, 3, PALETTE.skin);
-    fillRect(ctx, 23, 19, 3, 3, PALETTE.skin);
-  }
-
-  // 머리 (얼굴)
-  fillRect(ctx, 8, 2, 16, 12, PALETTE.skin);
-
-  // 머리카락
-  fillRect(ctx, 7, 1, 18, 4, colors.hair);
-  fillRect(ctx, 6, 2, 3, 6, colors.hair);
-  fillRect(ctx, 23, 2, 3, 6, colors.hair);
-
-  // 눈
-  if (direction !== 'up') {
-    if (direction === 'down') {
-      fillRect(ctx, 11, 6, 3, 3, PALETTE.white);
-      fillRect(ctx, 18, 6, 3, 3, PALETTE.white);
-      fillRect(ctx, 12, 7, 2, 2, PALETTE.black);
-      fillRect(ctx, 19, 7, 2, 2, PALETTE.black);
-    } else {
-      const eyeX = direction === 'left' ? 10 : 19;
-      fillRect(ctx, eyeX, 6, 3, 3, PALETTE.white);
-      fillRect(ctx, eyeX + 1, 7, 2, 2, PALETTE.black);
-    }
   }
 
   spriteCache[cacheKey] = canvas;
@@ -990,38 +1059,24 @@ export function generateNPCSprite(npcId: string, direction: Direction): HTMLCanv
 
 // ===== 캐시 관리 =====
 export function clearSpriteCache(): void {
-  Object.keys(spriteCache).forEach((key) => delete spriteCache[key]);
+  Object.keys(spriteCache).forEach(key => delete spriteCache[key]);
 }
 
 export function preloadSprites(season: Season): void {
-  // 타일 미리 로드
-  const tileTypes: TileType[] = ['grass', 'dirt', 'tilled', 'watered', 'water', 'wood_floor'];
-  tileTypes.forEach((type) => {
+  // 타일 프리로드
+  const tileTypes: TileType[] = ['grass', 'dirt', 'tilled', 'watered', 'water'];
+  tileTypes.forEach(type => {
     for (let v = 0; v < 4; v++) {
       generateTileSprite(type, season, v);
     }
   });
 
-  // 플레이어 미리 로드
+  // 플레이어 프리로드
   const directions: Direction[] = ['up', 'down', 'left', 'right'];
-  directions.forEach((dir) => {
+  directions.forEach(dir => {
     for (let f = 0; f < 4; f++) {
       generatePlayerSprite(dir, f, true);
       generatePlayerSprite(dir, f, false);
     }
-  });
-
-  // 도구 미리 로드
-  const tools = ['hoe', 'wateringCan', 'axe', 'pickaxe', 'scythe'];
-  tools.forEach((tool) => generateToolSprite(tool));
-
-  // 작물 미리 로드
-  const crops = ['parsnip', 'cauliflower', 'potato', 'strawberry', 'melon', 'tomato', 'corn', 'pumpkin', 'eggplant', 'cranberry'];
-  crops.forEach((crop) => {
-    for (let s = 0; s <= 5; s++) {
-      generateCropSprite(crop, s, 5);
-    }
-    generateItemSprite(crop);
-    generateItemSprite(`${crop}_seeds`);
   });
 }

@@ -112,8 +112,9 @@ interface GameStore {
 
 // 플레이어 이동 설정
 const PLAYER_SPEED = 280; // 최대 속도 (픽셀/초)
-const ACCELERATION = 2000; // 가속도 (픽셀/초²)
+const ACCELERATION = 5000; // 가속도 (픽셀/초²) - 빠른 시작
 const DECELERATION = 1500; // 감속도 (픽셀/초²)
+const MIN_START_SPEED = 150; // 최소 시작 속도 (픽셀/초)
 const ANIMATION_SPEED = 0.15;
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -276,6 +277,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       targetVelY *= normalizer;
     }
 
+    // 현재 총 속도 계산 (방향 전환 시 속도 유지용)
+    const currentSpeed = Math.sqrt(player.velocity.x ** 2 + player.velocity.y ** 2);
+
     // 현재 속도에서 목표 속도로 부드럽게 보간 (가속)
     let newVelX = player.velocity.x;
     let newVelY = player.velocity.y;
@@ -294,6 +298,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
       newVelY = Math.min(targetVelY, newVelY + accel);
     } else if (targetVelY < newVelY) {
       newVelY = Math.max(targetVelY, newVelY - accel);
+    }
+
+    // 첫 걸음일 때 최소 시작 속도 보장
+    const newSpeed = Math.sqrt(newVelX ** 2 + newVelY ** 2);
+    if (currentSpeed < 10 && newSpeed > 0 && newSpeed < MIN_START_SPEED) {
+      const scale = MIN_START_SPEED / newSpeed;
+      newVelX *= scale;
+      newVelY *= scale;
+    }
+
+    // 방향 전환 시 속도 유지 (기존 속도가 있었다면)
+    if (currentSpeed > MIN_START_SPEED && newSpeed > 0) {
+      const targetSpeed = Math.sqrt(targetVelX ** 2 + targetVelY ** 2);
+      // 목표 방향으로 기존 속도 크기 유지
+      const maintainSpeed = Math.min(currentSpeed, targetSpeed);
+      const currentNewSpeed = Math.sqrt(newVelX ** 2 + newVelY ** 2);
+      if (currentNewSpeed > 0 && currentNewSpeed < maintainSpeed * 0.9) {
+        const scale = maintainSpeed / currentNewSpeed;
+        newVelX *= scale;
+        newVelY *= scale;
+      }
     }
 
     // 새 위치 계산

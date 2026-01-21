@@ -139,8 +139,8 @@ export class Renderer {
       player.isMoving
     );
 
-    // 캐릭터 크기 5배 (32 * 5 = 160)
-    const PLAYER_SCALE = 5;
+    // 캐릭터 크기 3배 (32 * 3 = 96)
+    const PLAYER_SCALE = 3;
     const playerSize = TILE_SIZE * PLAYER_SCALE * this.camera.getZoom();
 
     this.ctx.drawImage(
